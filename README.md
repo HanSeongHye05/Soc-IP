@@ -1,143 +1,103 @@
-동계올림픽 멀티 기능 임베디드 시스템 (FPGA + Vitis)
+# 🏁 FPGA 기반 동계올림픽 멀티 워치 시스템 (Speed Skating 중심)
 
-1. 프로젝트 개요
+## 📌 프로젝트 개요
 
-본 프로젝트는 FPGA 기반 Custom IP와 Vitis 소프트웨어를 이용하여
-동계올림픽 종목별 시간 측정 기능을 하나의 시스템으로 통합 구현한 것이다.
+본 프로젝트는 FPGA 기반의 다기능 타이머 시스템으로,
+동계올림픽 종목(스피드 스케이팅, 알파인 스키, 아이스하키, 시계 모드)을
+하나의 시스템으로 통합하여 구현하였습니다.
 
-단순 타이머가 아니라 종목별 요구사항에 맞게 기능을 분리하여
-하드웨어와 소프트웨어를 나누어 설계하였다.
+특히, 저는 **Speed Skating 모드의 제어 로직을 Vitis(C)** 환경에서 구현하였으며,
+Stopwatch IP를 기반으로 경기 기록을 처리하는 기능을 개발했습니다.
 
+---
 
-2. 시스템 구성
+## 🎯 주요 기능
 
-- 프로세서: MicroBlaze
-- 개발 환경: Vivado, Vitis
+### ✔ Speed Skating (핵심 구현)
 
-- Custom IP
-  - Stopwatch IP
-  - Cooktimer IP
-  - Watch IP
-  - FND Controller
-  - LCD Controller (I2C)
-  - Alarm IP
+* Lap 기반 기록 측정 (총 4 Lap)
+* Split Time 계산
+* BEST 기록 자동 갱신
+* 4 Lap 완료 시 자동 정지
+* LCD에 Lap별 기록 및 BEST 표시
 
-- 주변 장치
-  - GPIO (버튼, 스위치)
-  - UART
-  - LCD 2개
-  - 7-Segment(FND)
+---
 
+### ✔ 시스템 기능
 
-3. 주요 기능
+* Switch를 통한 모드 전환
+* LCD를 통한 종목 및 상태 출력
+* FND(7-Segment)를 통한 시간 실시간 출력
 
-(1) 스피드 스케이팅
+---
 
-- Stopwatch IP를 이용한 시간 측정
-- 4바퀴 Lap 기록 저장
-- 각 Lap의 Split Time을 소프트웨어에서 계산
-  (현재 시간 - 이전 Lap 시간)
+## 🧠 시스템 구조
 
-- 가장 빠른 기록(BEST) 자동 갱신
-- LCD에 Lap 기록 및 BEST 표시
+```
+[Button / Switch Input]
+        ↓
+[Vitis (C) Control Logic]
+        ↓ (AXI)
+[Stopwatch IP (Verilog)]
+        ↓
+[LCD / FND Output]
+```
 
-설계 특징
-- Lap 기능을 IP가 아닌 소프트웨어에서 처리하여 동작 충돌 방지
-- LCD 전체 갱신이 아닌 일부 영역만 업데이트하여 화면 깨짐 방지
+---
 
+## ⚙️ 하드웨어 구성 (Verilog IP)
 
-(2) 알파인 스키
+* Stopwatch IP (시간 측정)
+* FND Controller (7-Segment 출력)
+* IIC Controller (LCD 제어)
 
-- Stopwatch 기반 기록 측정
-- 버튼 입력을 통해 패널티 시간(+3초) 누적
+※ Stopwatch IP는 팀 프로젝트에서 공동으로 개발된 모듈을 기반으로 사용하였습니다.
 
-설계 특징
-- 실제 경기 규칙을 반영하여 시간 + 패널티를 합산 출력
+---
 
+## 💻 소프트웨어 구성 (Vitis)
 
-(3) 아이스하키
+* Speed Skating 상태 로직 구현
+* Lap split 및 BEST 기록 계산
+* GPIO 기반 버튼 입력 처리
+* AXI를 통한 IP 제어
 
-- FSM 기반 경기 진행 제어
+---
 
-상태 구성
-- 경기 시간 (Period)
-- 작전 시간 (Timeout)
-- 휴식 시간 (Intermission)
-- 대기 상태 (Idle)
+## 🔥 핵심 구현 내용 (Speed Skating)
 
-주요 기능
-- 상태 자동 전환
-- 타이머 일시정지 및 재시작
-- 경기 종료 자동 처리
+* 누적 시간 기반 Split 계산
+* 이전 Lap 기준 차이 계산 방식 적용
+* 최소 시간 기록(BEST) 자동 갱신
+* LCD 부분 업데이트 최적화 (불필요한 전체 갱신 방지)
 
-설계 특징
-- Cooktimer IP와 상태 머신을 결합하여 구현
+---
 
+## 🧩 역할 분담
 
-(4) 시계 기능
+* **개인 구현**
 
-- 서울 / 밀라노 시간 동시 표시
-- 버튼을 이용한 시간 조정
+  * Speed Skating 제어 로직 (Vitis)
+  * Lap / BEST 기록 처리
+  * LCD 출력 로직 일부
 
-설계 특징
-- 시차 계산을 통해 두 지역 시간 동시 출력
+* **팀 공동 구현**
 
+  * Stopwatch IP (Verilog)
+  * 전체 시스템 통합
 
-4. 설계 방식
+---
 
-(1) Hardware / Software 분리
+## 🚀 결과
 
-- 시간 카운팅: Hardware(IP)
-- 모드 제어 및 로직: Software
-- 사용자 인터페이스(LCD, FND): Software
+* FPGA 기반 실시간 타이머 시스템 구현
+* HW(IP) + SW(Vitis) 연동 구조 설계
+* 멀티 모드 시스템 구현 경험 확보
 
-시간 정확도가 중요한 부분은 IP로 구현하고,
-제어 및 표시 로직은 소프트웨어에서 처리하도록 분리하였다.
+---
 
+## 📌 한 줄 요약
 
-(2) 인터럽트 기반 처리
+> Stopwatch IP를 기반으로 Speed Skating 경기 기록 로직을 Vitis에서 구현한 FPGA 제어 시스템
 
-- GPIO 인터럽트를 이용한 버튼 입력 처리
-- UART 인터럽트를 이용한 데이터 수신 처리
-
-Polling 방식이 아닌 이벤트 기반으로 설계하였다.
-
-
-(3) LCD 출력 방식
-
-- 전체 갱신이 아닌 필요한 부분만 업데이트
-- 화면 깨짐 및 깜빡임 문제를 최소화
-
-
-5. 프로젝트 구조
-
-vitis/
- ├── basic_version/
- │   └── main.c
- │
- └── extended_version/
-     └── main.c
-
-
-6. 실행 방법
-
-1) Vivado에서 Bitstream 생성
-2) Hardware Export (XSA)
-3) Vitis에서 프로젝트 생성
-4) Build 후 FPGA 보드에 다운로드
-
-
-7. 배운 점
-
-- Hardware와 Software를 나누어 설계하는 방법
-- 인터럽트 기반 임베디드 시스템 구현
-- FSM을 이용한 상태 제어
-- LCD 및 FND를 이용한 출력 제어
-- 실제 요구사항을 반영한 시스템 설계 경험
-
-
-8. 개선 방향
-
-- Digital Twin(Blender + Unity) 연동
-- CAN 통신 기반 확장
-- GUI 기반 모니터링 기능 추가
+---
